@@ -1,0 +1,45 @@
+[build-system]
+requires = [
+    "setuptools"
+]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "SNIaSpectrumNN"
+version = "0.0.1"
+authors = [
+    {name = "Anthony Burrow", email = "anthony.r.burrow@gmail.com"},
+]
+maintainers = [
+    {name = "Anthony Burrow", email = "anthony.r.burrow@gmail.com"}
+]
+description = "A SN Ia spectrum generator using empirical models."
+license = { file = "LICENSE" }
+readme = "README.md"
+classifiers=[
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Intended Audience :: Science/Research",
+]
+dependencies = [
+    "numpy",
+    "SNIaSpectrumGen @ git+https://github.com/anthonyburrow/SNIaSpectrumGen.git"
+]
+
+[project.optional-dependencies]
+torch = [
+    "torch"
+]
+dev = [
+    "pytest"
+]
+
+[project.urls]
+Repository = "https://github.com/anthonyburrow/SNIaSpectrumNN.git"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["SNIaSpectrumNN*"]
