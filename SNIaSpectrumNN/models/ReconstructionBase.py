@@ -1,4 +1,5 @@
 from pathlib import Path
+import sys
 
 import torch
 from torch import nn, Tensor
@@ -31,8 +32,7 @@ class ReconstructionBase(nn.Module):
             'cuda' if torch.cuda.is_available() else 'cpu'
         )
 
-        root_dir = Path(__file__).resolve().parents[2]
-        self.checkpoint_dir = root_dir / 'torch_checkpoints'
+        self.checkpoint_dir = Path(sys.argv[0]).parent / 'torch_checkpoints'
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
         self.input_proj = nn.Linear(2, embed_dim)

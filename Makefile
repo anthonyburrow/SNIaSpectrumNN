@@ -5,7 +5,7 @@ VENV_DIR := .venv
 VENV_PYTHON := $(VENV_DIR)/bin/python
 VENV_PIP := $(VENV_DIR)/bin/pip
 PYTEST_FLAGS := -sv
-PYTORCH_FLAGS := --index-url https://download.pytorch.org/whl/cu130
+PYTORCH_FLAGS := --index-url https://download.pytorch.org/whl/cu118
 
 IN_VENV := $(shell python -c 'import sys; print(int(sys.prefix != sys.base_prefix))')
 
@@ -32,18 +32,18 @@ install:
 		echo "Installing in venv..."; \
 		$(VENV_PIP) install --upgrade pip; \
 		$(VENV_PIP) install -e .[dev]; \
-		$(VENV_PIP) install -e .[torch] $(PYTORCH_FLAGS); \
+		$(VENV_PIP) install --no-cache-dir -e .[torch] $(PYTORCH_FLAGS); \
 	elif [ "$(IN_VENV)" = "1" ]; then \
 		echo "Installing in active virtual environment..."; \
 		pip install --upgrade pip; \
 		pip install -e .[dev]; \
-		pip install -e .[torch] $(PYTORCH_FLAGS); \
+		pip install --no-cache-dir -e .[torch] $(PYTORCH_FLAGS); \
 	else \
 		echo "No virtual environment detected."; \
 		echo "Installing in system/user Python..."; \
 		pip install --upgrade pip; \
 		pip install -e .[dev]; \
-		pip install -e .[torch] $(PYTORCH_FLAGS); \
+		pip install --no-cache-dir -e .[torch] $(PYTORCH_FLAGS); \
 	fi
 	@echo "Installation complete!"
 
