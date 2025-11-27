@@ -2,6 +2,8 @@ import sys
 from pathlib import Path
 
 import torch
+import numpy as np
+import matplotlib.pyplot as plt
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -20,10 +22,10 @@ def pretrain(
     save_each_epoch: bool = True,
 ) -> SpectrumModel:
     model = SpectrumModel(
-        embed_dim=64,
-        num_heads=4,
-        ff_dim=128,
-        num_layers=2,
+        embed_dim=32,
+        num_heads=2,
+        ff_dim=64,
+        num_layers=1,
         max_len=2000,
         dropout=0.1,
         feature_range=(0.2, 0.26),
@@ -46,7 +48,7 @@ def pretrain(
 
     recon_head = ReconstructionHead(
         embed_dim=model.encoder.embed_dim,
-        hidden=128,
+        hidden=64,
         dropout=0.1,
         out_dim=1,
     )
@@ -71,12 +73,83 @@ def pretrain(
     return model
 
 
+def evaluate_and_plot(
+    model: SpectrumModel,
+    batch_size: int = 4,
+    steps: int = 1,
+    outdir: Path | str | None = None,
+):
+    model.eval()
+
+    script_dir = Path(__file__).resolve().parent
+    out_dir = Path(outdir) if outdir is not None else (script_dir / "plots")
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    ds = ReconstructionDataset(
+        steps=steps,
+        max_len=model.encoder.max_len,
+        batch_size=batch_size,
+    )
+    batch = ds[0]
+    x = batch["x"]  # (B, L, 2) -> [wave, flux]
+
+    with torch.no_grad():
+        y_pred = model.predict(x)  # (B, L, 1)
+
+    x_np = x.numpy()
+    y_np = y_pred.numpy()
+
+    fig, ax = plt.subplots(1, 2, dpi=125, figsize=(12, 4.8))
+
+    offset = 0.0
+    low, high = model.encoder.feature_range
+    B = min(batch_size, x_np.shape[0])
+    for i in range(B):
+        valid = ~(np.all(x_np[i] == 0.0, axis=-1))
+
+        wave = x_np[i][valid, 0]
+        flux_in = x_np[i][valid, 1]
+        flux_out = y_np[i, valid, 0]
+
+        ax[0].plot(wave, np.log10(np.clip(flux_in, 1e-6, 1e4)) + offset, 'k-', label='Input' if i == 0 else None)
+        ax[0].plot(wave, np.log10(np.clip(flux_out, 1e-6, 1e4)) + offset, 'r-', label='Reconstructed' if i == 0 else None)
+
+        res = flux_in - flux_out
+        ax[1].plot(wave, res + offset, 'k-')
+
+        for j in range(2):
+            ax[j].axvline(low, ls='--', color='k', alpha=0.25)
+            ax[j].axvline(high, ls='--', color='k', alpha=0.25)
+        ax[1].axhline(offset, ls='--', color='k', alpha=0.5)
+
+        offset += 1.0
+
+    for j in range(2):
+        ax[j].set_xlim(0.0, 1.0)
+
+    ax[0].set_xlabel('normalized wavelength')
+    ax[0].set_ylabel('Log(normalized flux) + const.')
+    handles, labels = ax[0].get_legend_handles_labels()
+    if handles:
+        ax[0].legend()
+
+    ax[1].set_xlabel('normalized wavelength')
+    ax[1].set_ylabel('residual flux')
+
+    plt.tight_layout()
+    out_path = out_dir / "pretrain_reconstruction_examples.png"
+    fig.savefig(out_path)
+    plt.close(fig)
+    print(f"Saved reconstruction plots to {out_path}")
+
+
 if __name__ == "__main__":
-    pretrain(
-        train_steps=100,
-        val_steps=20,
-        batch_size=8,
-        epochs=5,
+    model = pretrain(
+        train_steps=16,
+        val_steps=4,
+        batch_size=16,
+        epochs=32,
         lr=1e-4,
         save_each_epoch=True,
     )
+    evaluate_and_plot(model, batch_size=4, steps=1)
