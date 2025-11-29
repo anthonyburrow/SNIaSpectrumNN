@@ -1,11 +1,10 @@
-from torch import nn, Tensor
+from torch import Tensor, nn
 
 
 class SpectrumModelHead(nn.Module):
-
     def __init__(self, embed_dim: int, **kwargs):
         super().__init__()
         self.embed_dim = embed_dim
 
     def forward(self, x: Tensor) -> Tensor:
-        raise NotImplementedError("Subclasses must implement forward()")
+        raise NotImplementedError('Subclasses must implement forward()')

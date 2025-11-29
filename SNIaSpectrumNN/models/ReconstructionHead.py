@@ -1,9 +1,9 @@
-from torch import nn, Tensor
+from torch import Tensor, nn
+
 from .SpectrumModelHead import SpectrumModelHead
 
 
 class ReconstructionHead(SpectrumModelHead):
-
     def __init__(
         self,
         embed_dim: int,

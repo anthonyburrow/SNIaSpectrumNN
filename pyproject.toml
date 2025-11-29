@@ -31,10 +31,11 @@ dependencies = [
 
 [project.optional-dependencies]
 torch = [
-    "torch"
+    "torch",
 ]
 dev = [
-    "pytest"
+    "pytest",
+    "ruff",
 ]
 
 [project.urls]
@@ -43,3 +44,42 @@ Repository = "https://github.com/anthonyburrow/SNIaSpectrumNN.git"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["SNIaSpectrumNN*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-sv",
+    "--strict-markers",
+    "--tb=short",
+    "--disable-warnings",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "gpu: marks tests that require GPU",
+]
+
+[tool.ruff]
+line-length = 79
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+
+ignore = []
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = true

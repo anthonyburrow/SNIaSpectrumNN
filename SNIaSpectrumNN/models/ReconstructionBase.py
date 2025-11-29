@@ -1,15 +1,11 @@
-from pathlib import Path
-import sys
-
 import torch
-from torch import nn, Tensor
+from torch import Tensor, nn
 
-from ..layers.TransformerAutoencoderBlock import TransformerAutoencoderBlock
 from ..layers.GatedResidualNetwork import GatedResidualNetwork
+from ..layers.TransformerAutoencoderBlock import TransformerAutoencoderBlock
 
 
 class ReconstructionBase(nn.Module):
-
     def __init__(
         self,
         embed_dim: int = 64,
@@ -29,9 +25,9 @@ class ReconstructionBase(nn.Module):
         )
         if self.device.type == 'cuda':
             gpu_name = torch.cuda.get_device_name(0)
-            print(f"Using GPU: {gpu_name}")
+            print(f'Using GPU: {gpu_name}')
         else:
-            print("Using CPU (CUDA not available)")
+            print('Using CPU (CUDA not available)')
 
         self.input_proj = nn.Linear(2, embed_dim)
 
@@ -64,5 +60,5 @@ class ReconstructionBase(nn.Module):
 
         for layer in self.encoder_layers:
             x = layer(x, padding_mask)
-        
+
         return x

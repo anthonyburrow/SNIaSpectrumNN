@@ -1,12 +1,12 @@
 from pathlib import Path
 
-import torch
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import torch
 
-from SNIaSpectrumNN.models.SpectrumModel import SpectrumModel
-from SNIaSpectrumNN.models.ReconstructionHead import ReconstructionHead
 from SNIaSpectrumNN.data.ReconstructionDataset import ReconstructionDataset
+from SNIaSpectrumNN.models.ReconstructionHead import ReconstructionHead
+from SNIaSpectrumNN.models.SpectrumModel import SpectrumModel
 from SNIaSpectrumNN.util.losses import FeatureWeightedMSE
 
 
@@ -19,7 +19,7 @@ def pretrain(
     save_each_epoch: bool = True,
 ) -> SpectrumModel:
     model = SpectrumModel(
-        name="ReconstructionModel",
+        name='ReconstructionModel',
         embed_dim=32,
         num_heads=2,
         ff_dim=64,
@@ -55,17 +55,17 @@ def pretrain(
     checkpoint_path = checkpoint_dir / f'{model.name}.pt'
 
     if checkpoint_path.exists():
-        print(f"Found checkpoint: {checkpoint_path}")
+        print(f'Found checkpoint: {checkpoint_path}')
         model.load_model(path=checkpoint_path)
     else:
-        print("No checkpoint found. Starting from scratch.")
+        print('No checkpoint found. Starting from scratch.')
 
     loss = FeatureWeightedMSE(
         feature_range=(0.2, 0.26),
         feature_weight=2.0,
     )
 
-    print(f"Starting pretraining for {epochs} epochs...")
+    print(f'Starting pretraining for {epochs} epochs...')
     model.fit(
         train_loader=train_loader,
         val_loader=val_loader,
@@ -74,7 +74,7 @@ def pretrain(
         save_each_epoch=save_each_epoch,
         loss=loss,
     )
-    print("Pretraining complete!")
+    print('Pretraining complete!')
 
     return model
 
@@ -88,7 +88,7 @@ def evaluate_and_plot(
     model.eval()
 
     script_dir = Path(__file__).resolve().parent
-    out_dir = Path(outdir) if outdir is not None else (script_dir / "plots")
+    out_dir = Path(outdir) if outdir is not None else (script_dir / 'plots')
     out_dir.mkdir(parents=True, exist_ok=True)
 
     ds = ReconstructionDataset(
@@ -97,7 +97,7 @@ def evaluate_and_plot(
         batch_size=batch_size,
     )
     batch = ds[0]
-    x = batch["x"]  # (B, L, 2) -> [wave, flux]
+    x = batch['x']  # (B, L, 2) -> [wave, flux]
 
     with torch.no_grad():
         y_pred = model.predict(x)  # (B, L, 1)
@@ -117,8 +117,18 @@ def evaluate_and_plot(
         flux_in = x_np[i][valid, 1]
         flux_out = y_np[i, valid, 0]
 
-        ax[0].plot(wave, np.log10(np.clip(flux_in, 1e-6, 1e4)) + offset, 'k-', label='Input' if i == 0 else None)
-        ax[0].plot(wave, np.log10(np.clip(flux_out, 1e-6, 1e4)) + offset, 'r-', label='Reconstructed' if i == 0 else None)
+        ax[0].plot(
+            wave,
+            np.log10(np.clip(flux_in, 1e-6, 1e4)) + offset,
+            'k-',
+            label='Input' if i == 0 else None,
+        )
+        ax[0].plot(
+            wave,
+            np.log10(np.clip(flux_out, 1e-6, 1e4)) + offset,
+            'r-',
+            label='Reconstructed' if i == 0 else None,
+        )
 
         res = flux_in - flux_out
         ax[1].plot(wave, res + offset, 'k-')
@@ -143,13 +153,13 @@ def evaluate_and_plot(
     ax[1].set_ylabel('residual flux')
 
     plt.tight_layout()
-    out_path = out_dir / "pretrain_reconstruction_examples.png"
+    out_path = out_dir / 'pretrain_reconstruction_examples.png'
     fig.savefig(out_path)
     plt.close(fig)
-    print(f"Saved reconstruction plots to {out_path}")
+    print(f'Saved reconstruction plots to {out_path}')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     model = pretrain(
         train_steps=16,
         val_steps=4,

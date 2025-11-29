@@ -1,11 +1,9 @@
 import numpy as np
 import torch
 from torch import Tensor
-from typing import Dict
 
 
 class SpectrumDatasetBase(torch.utils.data.Dataset):
-
     def __init__(
         self,
         steps: int,
@@ -28,10 +26,10 @@ class SpectrumDatasetBase(torch.utils.data.Dataset):
         return padded
 
     def _get_targets(self, x: Tensor, idx: int) -> Tensor:
-        raise NotImplementedError("Subclasses must implement _get_targets()")
+        raise NotImplementedError('Subclasses must implement _get_targets()')
 
     def __len__(self) -> int:
         return self.steps
 
-    def __getitem__(self, idx: int) -> Dict[str, Tensor]:
-        raise NotImplementedError("Subclasses must implement __getitem__()")
+    def __getitem__(self, idx: int) -> dict[str, Tensor]:
+        raise NotImplementedError('Subclasses must implement __getitem__()')

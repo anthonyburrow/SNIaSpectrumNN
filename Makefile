@@ -4,7 +4,6 @@ PYTHON := python
 VENV_DIR := .venv
 VENV_PYTHON := $(VENV_DIR)/bin/python
 VENV_PIP := $(VENV_DIR)/bin/pip
-PYTEST_FLAGS := -sv
 PYTORCH_FLAGS := --index-url https://download.pytorch.org/whl/cu118
 
 IN_VENV := $(shell python -c 'import sys; print(int(sys.prefix != sys.base_prefix))')
@@ -50,13 +49,13 @@ install:
 test:
 	@if [ -d "$(VENV_DIR)" ] && [ "$(IN_VENV)" = "0" ]; then \
 		echo "Running tests in venv..."; \
-		$(VENV_PYTHON) -m pytest $(PYTEST_FLAGS); \
+		$(VENV_PYTHON) -m pytest; \
 	elif [ "$(IN_VENV)" = "1" ]; then \
 		echo "Running tests in active virtual environment..."; \
-		pytest $(PYTEST_FLAGS); \
+		pytest; \
 	else \
 		echo "Running tests..."; \
-		pytest $(PYTEST_FLAGS); \
+		pytest; \
 	fi
 
 clean:

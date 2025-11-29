@@ -1,16 +1,15 @@
 import torch
-from torch import nn, Tensor
+from torch import Tensor, nn
 
 
 class FeatureWeightedMSE(nn.Module):
-    
     def __init__(
         self,
         feature_range: tuple[float, float] = (0.2, 0.26),
         feature_weight: float = 2.0,
     ):
         super().__init__()
-        
+
         self.feature_range = feature_range
         self.feature_weight = feature_weight
 
@@ -28,14 +27,14 @@ class FeatureWeightedMSE(nn.Module):
 
         log_pred = torch.log(flux_pred) / self.log_base
         log_true = torch.log(flux_true) / self.log_base
-        error = (log_pred - log_true)**2
+        error = (log_pred - log_true) ** 2
 
         seq_len = y_true.size(1)
         wave = torch.linspace(0.0, 1.0, seq_len, device=y_true.device)
         wave = wave.unsqueeze(0)  # (1, seq_len)
 
         wave_centered = wave - self.feature_center
-        gaussian_arg = (wave_centered / self.feature_width)**2
+        gaussian_arg = (wave_centered / self.feature_width) ** 2
         gaussian = torch.exp(-0.5 * gaussian_arg)
 
         weight = 1.0 + (self.feature_weight - 1.0) * gaussian
