@@ -1,11 +1,8 @@
-import sys
 from pathlib import Path
 
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from SNIaSpectrumNN.models.SpectrumModel import SpectrumModel
 from SNIaSpectrumNN.models.ReconstructionHead import ReconstructionHead
@@ -29,8 +26,6 @@ def pretrain(
         num_layers=1,
         max_len=2000,
         dropout=0.1,
-        feature_range=(0.2, 0.26),
-        feature_weight=2.0,
     )
 
     train_ds = ReconstructionDataset(
@@ -66,8 +61,8 @@ def pretrain(
         print("No checkpoint found. Starting from scratch.")
 
     loss = FeatureWeightedMSE(
-        feature_range=model.encoder.feature_range,
-        feature_weight=model.encoder.feature_weight,
+        feature_range=(0.2, 0.26),
+        feature_weight=2.0,
     )
 
     print(f"Starting pretraining for {epochs} epochs...")
@@ -113,7 +108,7 @@ def evaluate_and_plot(
     fig, ax = plt.subplots(1, 2, dpi=125, figsize=(12, 4.8))
 
     offset = 0.0
-    low, high = model.encoder.feature_range
+    low, high = 0.2, 0.26
     B = min(batch_size, x_np.shape[0])
     for i in range(B):
         valid = ~(np.all(x_np[i] == 0.0, axis=-1))

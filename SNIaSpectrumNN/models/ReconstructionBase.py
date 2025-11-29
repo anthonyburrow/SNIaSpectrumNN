@@ -18,15 +18,11 @@ class ReconstructionBase(nn.Module):
         num_layers: int = 2,
         max_len: int = 2000,
         dropout: float = 0.1,
-        feature_range: tuple[float, float] = (0.2, 0.26),
-        feature_weight: float = 2.0,
     ):
         super().__init__()
 
         self.embed_dim = embed_dim
         self.max_len = max_len
-        self.feature_range = feature_range
-        self.feature_weight = feature_weight
 
         self.device = torch.device(
             'cuda' if torch.cuda.is_available() else 'cpu'
