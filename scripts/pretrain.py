@@ -23,7 +23,14 @@ def pretrain(
 ) -> SpectrumModel:
     script_dir = Path(__file__).resolve().parent
     checkpoint_dir = script_dir / 'torch_checkpoints'
-    weights_file = checkpoint_dir / 'ReconstructionBase_weights.pt'
+    full_model_weights = checkpoint_dir / 'SpectrumModel_weights.pt'
+    
+    checkpoint_filename = None
+    if full_model_weights.exists():
+        print(f"Found checkpoint: {full_model_weights}")
+        checkpoint_filename = "SpectrumModel_weights.pt"
+    else:
+        print("No checkpoint found. Starting from scratch.")
     
     model = SpectrumModel(
         embed_dim=32,
@@ -34,7 +41,6 @@ def pretrain(
         dropout=0.1,
         feature_range=(0.2, 0.26),
         feature_weight=2.0,
-        encoder_weights_file=weights_file if weights_file.exists() else None,
     )
 
     train_ds = ReconstructionDataset(
@@ -58,6 +64,9 @@ def pretrain(
         out_dim=1,
     )
     model.set_head(recon_head)
+
+    if checkpoint_filename is not None:
+        model.load_weights(filename=checkpoint_filename)
 
     loss = FeatureWeightedMSE(
         feature_range=model.encoder.feature_range,

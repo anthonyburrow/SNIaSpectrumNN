@@ -1,5 +1,6 @@
 from typing import Optional, Dict, List
 from pathlib import Path
+import sys
 
 import torch
 from torch import nn, Tensor
@@ -18,7 +19,6 @@ class SpectrumModel(nn.Module):
         dropout: float = 0.1,
         feature_range: tuple[float, float] = (0.2, 0.26),
         feature_weight: float = 2.0,
-        encoder_weights_file: Path | str | None = None,
     ):
         super().__init__()
 
@@ -31,11 +31,13 @@ class SpectrumModel(nn.Module):
             dropout=dropout,
             feature_range=feature_range,
             feature_weight=feature_weight,
-            weights_file=encoder_weights_file,
         )
 
         self.head: Optional[nn.Module] = None
         self.device = self.encoder.device
+        
+        self.checkpoint_dir = Path(sys.argv[0]).parent / 'torch_checkpoints'
+        self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
     def set_head(self, head: nn.Module):
         self.head = head.to(self.device)
@@ -157,8 +159,48 @@ class SpectrumModel(nn.Module):
                 preds.append(self.forward(chunk).cpu())
         return torch.cat(preds, dim=0)
 
-    def save_weights(self):
-        return self.encoder.save_weights()
+    def save_weights(
+            self,
+            path: Path | str | None = None,
+            filename: str | None = None
+        ) -> Path:
+        if path is None:
+            if filename is None:
+                filename = "SpectrumModel_weights.pt"
+            path = self.checkpoint_dir / filename
+        else:
+            path = Path(path)
+        
+        torch.save(self.state_dict(), path)
+        return path
 
-    def load_weights(self):
-        return self.encoder.load_weights()
+    def load_weights(
+            self,
+            path: Path | str | None = None,
+            filename: str | None = None,
+            encoder_only: bool = False
+        ) -> bool:
+        if path is None:
+            if filename is None:
+                filename = "SpectrumModel_weights.pt"
+            path = self.checkpoint_dir / filename
+        else:
+            path = Path(path)
+        
+        if path.exists():
+            checkpoint = torch.load(path, map_location=self.device, weights_only=True)
+            
+            if encoder_only:
+                encoder_state = {
+                    k.replace('encoder.', ''): v 
+                    for k, v in checkpoint.items() 
+                    if k.startswith('encoder.')
+                }
+                self.encoder.load_state_dict(encoder_state)
+                print(f"Loaded encoder weights from {path}")
+            else:
+                self.load_state_dict(checkpoint)
+                print(f"Loaded model weights from {path}")
+            
+            return True
+        return False
