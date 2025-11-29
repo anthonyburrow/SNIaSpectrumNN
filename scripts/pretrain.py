@@ -21,6 +21,10 @@ def pretrain(
     lr: float = 1e-4,
     save_each_epoch: bool = True,
 ) -> SpectrumModel:
+    script_dir = Path(__file__).resolve().parent
+    checkpoint_dir = script_dir / 'torch_checkpoints'
+    weights_file = checkpoint_dir / 'ReconstructionBase_weights.pt'
+    
     model = SpectrumModel(
         embed_dim=32,
         num_heads=2,
@@ -30,6 +34,7 @@ def pretrain(
         dropout=0.1,
         feature_range=(0.2, 0.26),
         feature_weight=2.0,
+        encoder_weights_file=weights_file if weights_file.exists() else None,
     )
 
     train_ds = ReconstructionDataset(

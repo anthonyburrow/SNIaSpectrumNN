@@ -1,4 +1,5 @@
-from typing import Optional, Dict, Tuple, List
+from typing import Optional, Dict, List
+from pathlib import Path
 
 import torch
 from torch import nn, Tensor
@@ -17,6 +18,7 @@ class SpectrumModel(nn.Module):
         dropout: float = 0.1,
         feature_range: tuple[float, float] = (0.2, 0.26),
         feature_weight: float = 2.0,
+        encoder_weights_file: Path | str | None = None,
     ):
         super().__init__()
 
@@ -29,6 +31,7 @@ class SpectrumModel(nn.Module):
             dropout=dropout,
             feature_range=feature_range,
             feature_weight=feature_weight,
+            weights_file=encoder_weights_file,
         )
 
         self.head: Optional[nn.Module] = None

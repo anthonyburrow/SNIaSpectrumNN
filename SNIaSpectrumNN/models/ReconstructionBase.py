@@ -20,6 +20,7 @@ class ReconstructionBase(nn.Module):
         dropout: float = 0.1,
         feature_range: tuple[float, float] = (0.2, 0.26),
         feature_weight: float = 2.0,
+        weights_file: Path | str | None = None,
     ):
         super().__init__()
 
@@ -57,6 +58,17 @@ class ReconstructionBase(nn.Module):
         self.encoder_layers = nn.ModuleList(layers)
 
         self.to(self.device)
+
+        # Load weights if provided
+        if weights_file is not None:
+            weights_path = Path(weights_file)
+            if weights_path.exists():
+                print(f"Loading weights from {weights_path}...")
+                state = torch.load(weights_path, map_location=self.device)
+                self.load_state_dict(state)
+                print("Weights loaded successfully.")
+            else:
+                print(f"Warning: weights_file '{weights_path}' not found. Starting with random initialization.")
 
     def forward(self, inputs: Tensor) -> Tensor:
         x = self.input_proj(inputs)
