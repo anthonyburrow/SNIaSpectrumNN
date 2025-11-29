@@ -1,60 +1,78 @@
 # SNIaSpectrumNN
 
-SN Ia spectrum utilities and neural network experimentation.
+Neural network models for predicting observational properties of Type Ia
+supernovae (SNe Ia) from their optical spectra.
 
-## PyTorch Rewrite (Experimental)
+## Overview
 
-The new PyTorch implementation lives in `snia_torch/` and introduces a base class `SpectrumModelBase` with:
+This project provides a collection of models that predict various properties of
+SNe Ia (e.g., Si II velocity, pseudo-equivalent widths, line strengths) given
+only their optical spectrum. Each model shares a common transformer-based
+autoencoder backbone that learns a compact representation of the spectrum,
+which is then used by task-specific output heads.
 
-- Transformer-like encoder backbone (`TransformerEncoderBlock`).
-- Pluggable heads via `set_head(head_module)`.
-- Minimal training loop (`fit`), evaluation, prediction, and checkpointing.
+### Architecture
 
-Concrete reconstruction example: `ReconstructionSpectrumModel` which attaches a `ReconstructionHead` predicting per-token flux.
+- **Base Encoder**: A transformer autoencoder with gated residual network
+layers that learns spectral features.
+- **Pre-training**: The autoencoder is pre-trained on spectrum reconstruction
+to learn meaningful representations.
+- **Task-Specific Heads**: After pre-training, the encoder backbone is
+fine-tuned with different output heads for specific prediction tasks.
 
-### Quick Start
+## Installation
 
-```python
-from snia_torch import ReconstructionSpectrumModel
-import torch
+Before installing, check the `PYTORCH_INDEX` variable in the `Makefile` and
+update it to match your CUDA version. The default is `cu118` (CUDA 11.8).
+Change this to the appropriate version for your GPU (e.g., `cu130` for the
+most recent version of CUDA that is compatible with more modern GPUs).
 
-# Fake batch: (batch, seq_len, 2) -> (wave, flux)
-batch = torch.rand(4, 512, 2)
-model = ReconstructionSpectrumModel(embed_dim=64, num_layers=2)
-model.load_checkpoint("recon.pt")  # safe if missing
-pred = model.predict(batch)
-print(pred.shape)  # (4, 512, 1)
+Install the project and its dependencies using the Makefile:
+
+```bash
+# Create venv if desired
+make venv
+
+# Install dependencies
+make install
 ```
 
-### Training Loop (Skeleton)
+This will create a virtual environment (if needed) and install the package with
+GPU-enabled PyTorch.
 
-```python
-from torch.utils.data import DataLoader, TensorDataset
-import torch
+## Usage
 
-waves_fluxes = torch.rand(64, 512, 2)
-target_flux = waves_fluxes[..., 1:].mean(-1, keepdim=True).expand(-1, 512, 1)  # dummy target
-ds = TensorDataset(waves_fluxes, target_flux)
-loader = DataLoader([{"x": x, "y": y} for x, y in ds], batch_size=8)
+### Training Workflow
 
-model = ReconstructionSpectrumModel()
-model.fit(loader, epochs=3)
+1. **Pre-train the autoencoder**:
+   ```bash
+   python scripts/pretrain.py
+   ```
+
+2. **Train a specific model** (e.g., Si II velocity prediction):
+   ```bash
+   python scripts/model_VelocitySiII.py
+   ```
+
+Additional model-specific training scripts will be added as the project
+develops.
+
+### Testing
+
+Run the test suite:
+
+```bash
+make test
 ```
 
-### Adding a New Head
+## Development
 
-Create a new `nn.Module` that takes encoder features and returns desired output shape, then either:
+The project structure:
 
-1. Subclass `SpectrumModelBase` and set the head in `__init__`, or
-2. Instantiate `SpectrumModelBase` directly and call `set_head(custom_head)`.
-
-This keeps weight sharing in the backbone while specializing outputs for different tasks (e.g., line feature regression, classification, uncertainty quantification).
-
-### Roadmap
-
-- Data adapter connecting `SNIaSpectrumGen` outputs to PyTorch datasets.
-- Additional heads (feature regression, global classification, sequence-to-sequence).
-- Mixed precision and distributed training utilities.
-- Rich logging (TensorBoard / WandB) integration.
-
-> The existing TensorFlow code will be deprecated once parity is achieved.
+- `SNIaSpectrumNN/`: Main package
+  - `models/`: Model architectures (base encoder and task-specific heads)
+  - `layers/`: Custom neural network layers
+  - `data/`: Dataset classes and data loading utilities
+  - `util/`: Loss functions and other utilities
+- `scripts/`: Training scripts for pre-training and specific models
+- `tests/`: Unit tests
