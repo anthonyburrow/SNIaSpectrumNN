@@ -32,6 +32,13 @@ class ReconstructionBase(nn.Module):
         self.device = torch.device(
             'cuda' if torch.cuda.is_available() else 'cpu'
         )
+        
+        # Print device info
+        if self.device.type == 'cuda':
+            gpu_name = torch.cuda.get_device_name(0)
+            print(f"Using GPU: {gpu_name}")
+        else:
+            print("Using CPU (CUDA not available)")
 
         self.checkpoint_dir = Path(sys.argv[0]).parent / 'torch_checkpoints'
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
