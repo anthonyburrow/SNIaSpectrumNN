@@ -21,18 +21,8 @@ def pretrain(
     lr: float = 1e-4,
     save_each_epoch: bool = True,
 ) -> SpectrumModel:
-    script_dir = Path(__file__).resolve().parent
-    checkpoint_dir = script_dir / 'torch_checkpoints'
-    full_model_weights = checkpoint_dir / 'SpectrumModel_weights.pt'
-    
-    checkpoint_filename = None
-    if full_model_weights.exists():
-        print(f"Found checkpoint: {full_model_weights}")
-        checkpoint_filename = "SpectrumModel_weights.pt"
-    else:
-        print("No checkpoint found. Starting from scratch.")
-    
     model = SpectrumModel(
+        name="ReconstructionModel",
         embed_dim=32,
         num_heads=2,
         ff_dim=64,
@@ -65,8 +55,15 @@ def pretrain(
     )
     model.set_head(recon_head)
 
-    if checkpoint_filename is not None:
-        model.load_weights(filename=checkpoint_filename)
+    script_dir = Path(__file__).resolve().parent
+    checkpoint_dir = script_dir / 'torch_checkpoints'
+    checkpoint_path = checkpoint_dir / f'{model.name}.pt'
+
+    if checkpoint_path.exists():
+        print(f"Found checkpoint: {checkpoint_path}")
+        model.load_model(path=checkpoint_path)
+    else:
+        print("No checkpoint found. Starting from scratch.")
 
     loss = FeatureWeightedMSE(
         feature_range=model.encoder.feature_range,
@@ -143,7 +140,7 @@ def evaluate_and_plot(
 
     ax[0].set_xlabel('normalized wavelength')
     ax[0].set_ylabel('Log(normalized flux) + const.')
-    handles, labels = ax[0].get_legend_handles_labels()
+    handles, _ = ax[0].get_legend_handles_labels()
     if handles:
         ax[0].legend()
 
