@@ -35,6 +35,7 @@ torch = [
 ]
 dev = [
     "pytest",
+    "pytest-cov",
     "ruff",
 ]
 

@@ -1,10 +1,11 @@
-.PHONY: help venv install test clean
+.PHONY: help venv install install-cpu install-gpu test test-cov clean
 
 PYTHON := python
 VENV_DIR := .venv
 VENV_PYTHON := $(VENV_DIR)/bin/python
 VENV_PIP := $(VENV_DIR)/bin/pip
-PYTORCH_FLAGS := --index-url https://download.pytorch.org/whl/cu118
+PYTORCH_INDEX ?= cu118
+PYTORCH_FLAGS := --index-url https://download.pytorch.org/whl/$(PYTORCH_INDEX)
 
 IN_VENV := $(shell python -c 'import sys; print(int(sys.prefix != sys.base_prefix))')
 
@@ -26,37 +27,59 @@ venv:
 	fi
 
 install:
+	@echo "[INFO] Installing with PyTorch index $(PYTORCH_INDEX)"
 	@if [ -d "$(VENV_DIR)" ] && [ "$(IN_VENV)" = "0" ]; then \
 		echo "Virtual environment detected but not activated."; \
 		echo "Installing in venv..."; \
 		$(VENV_PIP) install --upgrade pip; \
 		$(VENV_PIP) install -e .[dev]; \
-		$(VENV_PIP) install --no-cache-dir -e .[torch] $(PYTORCH_FLAGS); \
+		$(VENV_PIP) install --no-cache-dir $(PYTORCH_FLAGS) torch; \
 	elif [ "$(IN_VENV)" = "1" ]; then \
 		echo "Installing in active virtual environment..."; \
 		pip install --upgrade pip; \
 		pip install -e .[dev]; \
-		pip install --no-cache-dir -e .[torch] $(PYTORCH_FLAGS); \
+		pip install --no-cache-dir $(PYTORCH_FLAGS) torch; \
 	else \
 		echo "No virtual environment detected."; \
 		echo "Installing in system/user Python..."; \
 		pip install --upgrade pip; \
 		pip install -e .[dev]; \
-		pip install --no-cache-dir -e .[torch] $(PYTORCH_FLAGS); \
+		pip install --no-cache-dir $(PYTORCH_FLAGS) torch; \
 	fi
 	@echo "Installation complete!"
+
+install-cpu:
+	@$(MAKE) install PYTORCH_INDEX=cpu
+
+install-gpu:
+	@$(MAKE) install PYTORCH_INDEX=cu118
 
 test:
 	@if [ -d "$(VENV_DIR)" ] && [ "$(IN_VENV)" = "0" ]; then \
 		echo "Running tests in venv..."; \
-		$(VENV_PYTHON) -m pytest; \
+		$(VENV_PYTHON) -m pytest -m "not gpu"; \
 	elif [ "$(IN_VENV)" = "1" ]; then \
 		echo "Running tests in active virtual environment..."; \
-		pytest; \
+		pytest -m "not gpu"; \
 	else \
 		echo "Running tests..."; \
-		pytest; \
+		pytest -m "not gpu"; \
 	fi
+
+TEST_FLAGS ?= -m "not gpu and not slow" --cov=SNIaSpectrumNN --cov-report=term-missing
+
+test-cov:
+	@if [ -d "$(VENV_DIR)" ] && [ "$(IN_VENV)" = "0" ]; then \
+		echo "Running coverage tests in venv..."; \
+		$(VENV_PYTHON) -m pytest $(TEST_FLAGS); \
+	elif [ "$(IN_VENV)" = "1" ]; then \
+		echo "Running coverage tests in active virtual environment..."; \
+		pytest $(TEST_FLAGS); \
+	else \
+		echo "Running coverage tests..."; \
+		pytest $(TEST_FLAGS); \
+	fi
+	@echo "Coverage test run complete"
 
 clean:
 	@echo "Cleaning build artifacts..."
